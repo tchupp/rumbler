@@ -957,6 +957,7 @@ dependencies = [
  "clap",
  "env_logger",
  "envconfig",
+ "itertools",
  "log",
  "postgres",
  "sealed_test",
