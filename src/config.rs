@@ -13,6 +13,7 @@ pub struct Config {
     pub password: String,
     pub role: String,
     pub schema: String,
+    pub search_path: String,
     pub sslmode: String,
     pub directory: String,
     pub table: String,
@@ -29,7 +30,11 @@ pub fn load(config_path: Option<&str>, environment: Option<&str>) -> Result<Conf
         user: partial_config.user.unwrap_or("postgres".into()),
         password: partial_config.password.unwrap_or_default(),
         role: partial_config.role.unwrap_or_default(),
-        schema: partial_config.schema.unwrap_or("public".into()),
+        schema: partial_config.schema.clone().unwrap_or("public".into()),
+        search_path: partial_config
+            .search_path
+            .or(partial_config.schema)
+            .unwrap_or("public".into()),
         sslmode: partial_config.sslmode.unwrap_or("disable".into()),
         directory: partial_config.directory.unwrap_or(".".into()),
         table: partial_config.table.unwrap_or("rumbler_migrations".into()),
@@ -119,6 +124,7 @@ mod tests {
         assert_eq!(config.user, "postgres");
         assert_eq!(config.password, "");
         assert_eq!(config.schema, "public");
+        assert_eq!(config.search_path, "public");
         assert_eq!(config.sslmode, "disable");
         assert_eq!(config.directory, ".");
         assert_eq!(config.table, "rumbler_migrations");
@@ -145,6 +151,7 @@ mod tests {
         assert_eq!(config.user, "foo-user");
         assert_eq!(config.password, "foo-password");
         assert_eq!(config.schema, "foo-schema");
+        assert_eq!(config.search_path, "foo-schema");
         assert_eq!(config.sslmode, "foo-sslmode");
         assert_eq!(config.directory, "foo-directory");
         assert_eq!(config.table, "foo-table");
@@ -158,6 +165,7 @@ mod tests {
             ("RUMBLER_PORT", "1234"),
             ("RUMBLER_ROLE", "foo-role"),
             ("RUMBLER_SCHEMA", "foo-schema"),
+            ("RUMBLER_SEARCH_PATH", "foo-search-path"),
             ("RUMBLER_SSLMODE", "foo-sslmode"),
             ("RUMBLER_TABLE", "foo-table"),
             ("RUMBLER_USER", "foo-user"),
@@ -171,6 +179,7 @@ mod tests {
         assert_eq!(config.user, "foo-user");
         assert_eq!(config.password, "foo-password");
         assert_eq!(config.schema, "foo-schema");
+        assert_eq!(config.search_path, "foo-search-path");
         assert_eq!(config.sslmode, "foo-sslmode");
         assert_eq!(config.directory, "foo-directory");
         assert_eq!(config.table, "foo-table");
@@ -188,6 +197,7 @@ port = 5433
 user = "admin"
 password = "secret"
 schema = "myschema"
+search_path = "myschema,public"
 sslmode = "require"
 directory = "migrations"
 table = "schema_migrations"
@@ -206,6 +216,7 @@ host = "staging.example.com"
         assert_eq!(config.user, "admin");
         assert_eq!(config.password, "secret");
         assert_eq!(config.schema, "myschema");
+        assert_eq!(config.search_path, "myschema,public");
         assert_eq!(config.sslmode, "require");
         assert_eq!(config.directory, "migrations");
         assert_eq!(config.table, "schema_migrations");

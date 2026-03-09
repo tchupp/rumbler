@@ -61,6 +61,9 @@ struct RumblerConfigEnvironment {
     #[envconfig(from = "RUMBLER_SCHEMA")]
     pub schema: Option<String>,
 
+    #[envconfig(from = "RUMBLER_SEARCH_PATH")]
+    pub search_path: Option<String>,
+
     #[envconfig(from = "RUMBLER_SSLMODE")]
     pub sslmode: Option<String>,
 
@@ -87,6 +90,8 @@ pub struct PartialConfig {
     pub role: Option<String>,
     #[serde(default)]
     pub schema: Option<String>,
+    #[serde(default)]
+    pub search_path: Option<String>,
     #[serde(default)]
     pub sslmode: Option<String>,
     #[serde(default)]
@@ -120,6 +125,7 @@ pub fn try_load_config(config_path: Option<&str>) -> Result<PartialConfig, Rumbl
         password: or!(password, rumbler_config, rambler_config, file_config),
         role: or!(role, rumbler_config, rambler_config, file_config),
         schema: or!(schema, rumbler_config, rambler_config, file_config),
+        search_path: or!(search_path, rumbler_config, file_config),
         sslmode: or!(sslmode, rumbler_config, rambler_config, file_config),
         directory: or!(directory, rumbler_config, rambler_config, file_config),
         table: or!(table, rumbler_config, rambler_config, file_config),
