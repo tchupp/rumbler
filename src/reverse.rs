@@ -1,7 +1,7 @@
 use crate::db::Db;
 use crate::error::RumblerError;
 use crate::migration::DiscoveredMigration;
-use crate::{lint, migration};
+use crate::{lint, migration, template};
 
 pub struct ReverseOptions {
     pub all: bool,
@@ -36,11 +36,12 @@ pub fn run(db: &mut Db, directory: &str, options: &ReverseOptions) -> Result<(),
 
         log::info!("reversing: {}", migration.name);
         for statement in migration.down() {
+            let rendered = template::render(statement)?;
             if options.dry_run {
-                println!("{statement}");
+                println!("{rendered}");
             } else {
-                log::debug!("executing: {statement}");
-                db.execute(statement)?;
+                log::debug!("executing: {rendered}");
+                db.execute(&rendered)?;
             }
         }
 

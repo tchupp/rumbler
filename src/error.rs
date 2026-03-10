@@ -37,6 +37,9 @@ pub enum RumblerError {
         found: String,
     },
 
+    #[error("template error: {0}")]
+    Template(String),
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

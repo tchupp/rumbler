@@ -5,6 +5,7 @@ mod error;
 mod lint;
 mod migration;
 mod reverse;
+mod template;
 
 use clap::{Parser, Subcommand};
 use std::process;

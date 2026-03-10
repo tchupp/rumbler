@@ -24,6 +24,7 @@ sha2 = "0.10"
 sqruff-lib = "0.34"
 sqruff-lib-core = "0.34"
 itertools = "0.14"
+subst = "0.3"
 
 [dev-dependencies]
 tempfile = "3"

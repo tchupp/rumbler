@@ -5,15 +5,20 @@ use sqruff_lib::core::config::FluffConfig;
 use sqruff_lib::core::linter::core::Linter;
 
 use crate::error::RumblerError;
+use crate::template;
 
 pub fn lint_file(path: &PathBuf) -> Result<bool, RumblerError> {
+    let sql = fs::read_to_string(path)?;
+    let rendered = template::render(&sql)?;
+    let name = path.file_name().unwrap_or_default().to_string_lossy();
+    lint_sql(&rendered, &name)
+}
+
+pub fn lint_sql(sql: &str, name: &str) -> Result<bool, RumblerError> {
     let config = FluffConfig::from_source("[sqruff]\ndialect = postgres\n", None);
     let mut linter = Linter::new(config, None, None, false);
 
-    let sql = fs::read_to_string(path)?;
-    let name = path.file_name().unwrap_or_default().to_string_lossy();
-
-    let result = linter.lint_string_wrapped(&sql, false);
+    let result = linter.lint_string_wrapped(sql, false);
 
     let violations = result.violations();
     if !violations.is_empty() {
@@ -30,7 +35,6 @@ pub fn lint_file(path: &PathBuf) -> Result<bool, RumblerError> {
         Ok(false)
     } else {
         log::info!("linting: {name} => OK");
-
         Ok(true)
     }
 }
