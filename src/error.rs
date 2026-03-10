@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use crate::migration::AppliedMigration;
+use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum RumblerError {
