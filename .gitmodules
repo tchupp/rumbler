@@ -1,0 +1,12 @@
+[submodule "acceptance_tests/lib/bats-core"]
+	path = acceptance_tests/lib/bats-core
+	url = https://github.com/bats-core/bats-core.git
+[submodule "acceptance_tests/lib/bats-support"]
+	path = acceptance_tests/lib/bats-support
+	url = https://github.com/bats-core/bats-support.git
+[submodule "acceptance_tests/lib/bats-assert"]
+	path = acceptance_tests/lib/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
+[submodule "acceptance_tests/lib/bats-file"]
+	path = acceptance_tests/lib/bats-file
+	url = https://github.com/bats-core/bats-file.git
