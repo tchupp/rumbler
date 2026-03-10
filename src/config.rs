@@ -16,13 +16,18 @@ pub struct Config {
     pub search_path: String,
     pub sslmode: String,
     pub directory: String,
-    pub table: String,
+    pub rambler_table: String,
+    pub rumbler_table: String,
 }
 
-pub fn load(config_path: Option<&str>, environment: Option<&str>) -> Result<Config, RumblerError> {
+pub fn load(
+    config_path: Option<impl Into<String>>,
+    environment: Option<impl Into<String>>,
+) -> Result<Config, RumblerError> {
     let mut partial_config = try_load_config(config_path)?;
     merge_environment(&mut partial_config, environment)?;
 
+    let rambler_table = partial_config.table.unwrap_or("migrations".into());
     let config = Config {
         database: partial_config.database.unwrap_or_default(),
         host: partial_config.host.unwrap_or("localhost".into()),
@@ -37,7 +42,8 @@ pub fn load(config_path: Option<&str>, environment: Option<&str>) -> Result<Conf
             .unwrap_or("public".into()),
         sslmode: partial_config.sslmode.unwrap_or("disable".into()),
         directory: partial_config.directory.unwrap_or(".".into()),
-        table: partial_config.table.unwrap_or("rumbler_migrations".into()),
+        rambler_table: rambler_table.clone(),
+        rumbler_table: format!("rumbler_{}", rambler_table),
     };
 
     if config.database.is_empty() {
@@ -56,21 +62,16 @@ enum ConfigPath {
     None,
 }
 
-impl ConfigPath {
-    fn is_resolvable(&self) -> bool {
-        matches!(self, Self::Toml(_) | Self::Json(_))
-    }
-}
-
 fn merge_environment(
     config: &mut PartialConfig,
-    environment: Option<&str>,
+    environment: Option<impl Into<String>>,
 ) -> Result<(), RumblerError> {
     if let Some(environment) = environment {
+        let environment = environment.into();
         let env = config
             .environments
-            .get(environment)
-            .ok_or_else(|| RumblerError::UnknownEnvironment(environment.into()))?;
+            .get(environment.as_str())
+            .ok_or_else(|| RumblerError::UnknownEnvironment(environment))?;
 
         if let Some(_) = env.database {
             config.database = env.database.clone();
@@ -118,7 +119,7 @@ mod tests {
         let mut f = std::fs::File::create("rumbler.toml").unwrap();
         writeln!(f, r#"database = "testdb""#).unwrap();
 
-        let config = load(None, None).unwrap();
+        let config = load(None::<String>, None::<String>).unwrap();
         assert_eq!(config.host, "localhost");
         assert_eq!(config.port, 5432);
         assert_eq!(config.user, "postgres");
@@ -127,7 +128,8 @@ mod tests {
         assert_eq!(config.search_path, "public");
         assert_eq!(config.sslmode, "disable");
         assert_eq!(config.directory, ".");
-        assert_eq!(config.table, "rumbler_migrations");
+        assert_eq!(config.rambler_table, "migrations");
+        assert_eq!(config.rumbler_table, "rumbler_migrations");
     }
 
     #[sealed_test(env = [
@@ -144,7 +146,7 @@ mod tests {
         ]
     )]
     fn test_env_rambler_compat() {
-        let config = load(None, None).unwrap();
+        let config = load(None::<String>, None::<String>).unwrap();
         assert_eq!(config.database, "foo-database");
         assert_eq!(config.host, "foo-host");
         assert_eq!(config.port, 1234);
@@ -154,7 +156,8 @@ mod tests {
         assert_eq!(config.search_path, "foo-schema");
         assert_eq!(config.sslmode, "foo-sslmode");
         assert_eq!(config.directory, "foo-directory");
-        assert_eq!(config.table, "foo-table");
+        assert_eq!(config.rambler_table, "foo-table");
+        assert_eq!(config.rumbler_table, "rumbler_foo-table");
     }
 
     #[sealed_test(env = [
@@ -172,7 +175,7 @@ mod tests {
         ]
     )]
     fn test_env_rumbler_specific() {
-        let config = load(None, None).unwrap();
+        let config = load(None::<String>, None::<String>).unwrap();
         assert_eq!(config.database, "foo-database");
         assert_eq!(config.host, "foo-host");
         assert_eq!(config.port, 1234);
@@ -182,7 +185,8 @@ mod tests {
         assert_eq!(config.search_path, "foo-search-path");
         assert_eq!(config.sslmode, "foo-sslmode");
         assert_eq!(config.directory, "foo-directory");
-        assert_eq!(config.table, "foo-table");
+        assert_eq!(config.rambler_table, "foo-table");
+        assert_eq!(config.rumbler_table, "rumbler_foo-table");
     }
 
     #[sealed_test]
@@ -209,7 +213,7 @@ host = "staging.example.com"
         )
         .unwrap();
 
-        let config = load(None, None).unwrap();
+        let config = load(None::<String>, None::<String>).unwrap();
         assert_eq!(config.database, "testdb");
         assert_eq!(config.host, "db.example.com");
         assert_eq!(config.port, 5433);
@@ -219,9 +223,10 @@ host = "staging.example.com"
         assert_eq!(config.search_path, "myschema,public");
         assert_eq!(config.sslmode, "require");
         assert_eq!(config.directory, "migrations");
-        assert_eq!(config.table, "schema_migrations");
+        assert_eq!(config.rambler_table, "schema_migrations");
+        assert_eq!(config.rumbler_table, "rumbler_schema_migrations");
 
-        let config = load(None, Some("staging")).unwrap();
+        let config = load(None::<String>, Some("staging")).unwrap();
         assert_eq!(config.database, "staging_db");
         assert_eq!(config.host, "staging.example.com");
         assert_eq!(config.port, 5433); // inherited
@@ -240,7 +245,7 @@ host = "staging.example.com"
         )
         .unwrap();
 
-        let config = load(None, None).unwrap();
+        let config = load(None::<String>, None::<String>).unwrap();
         assert_eq!(config.database, "jsondb");
     }
 
@@ -251,7 +256,7 @@ host = "staging.example.com"
         let mut f = std::fs::File::create(&config_path).unwrap();
         writeln!(f, r#"database = "testdb""#).unwrap();
 
-        let config = load(config_path.to_str(), None).unwrap();
+        let config = load(config_path.to_str(), None::<String>).unwrap();
         assert_eq!(config.database, "testdb");
     }
 
@@ -262,7 +267,7 @@ host = "staging.example.com"
         let mut f = std::fs::File::create("rambler.json").unwrap();
         writeln!(f, r#"database = "rambler-db-loses""#).unwrap();
 
-        let config = load(None, None).unwrap();
+        let config = load(None::<String>, None::<String>).unwrap();
         assert_eq!(config.database, "rumbler-db-wins");
     }
 
@@ -273,7 +278,7 @@ host = "staging.example.com"
         let mut f = std::fs::File::create("rambler.json").unwrap();
         writeln!(f, r#"database = "rambler-db-loses""#).unwrap();
 
-        let config = load(None, None).unwrap();
+        let config = load(None::<String>, None::<String>).unwrap();
         assert_eq!(config.database, "env-wins");
     }
 
@@ -282,7 +287,7 @@ host = "staging.example.com"
         let mut f = std::fs::File::create("rumbler.toml").unwrap();
         writeln!(f, r#"database = "testdb""#).unwrap();
 
-        let result = load(None, Some("nonexistent"));
+        let result = load(None::<String>, Some("nonexistent"));
         assert!(result.is_err());
     }
 
@@ -291,7 +296,7 @@ host = "staging.example.com"
         let mut f = std::fs::File::create("rumbler.toml").unwrap();
         writeln!(f, r#"host = "localhost""#).unwrap();
 
-        let result = load(None, None);
+        let result = load(None::<String>, None::<String>);
         assert!(result.is_err());
     }
 }

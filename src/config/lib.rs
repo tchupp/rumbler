@@ -110,7 +110,9 @@ macro_rules! or {
     };
 }
 
-pub fn try_load_config(config_path: Option<&str>) -> Result<PartialConfig, RumblerError> {
+pub fn try_load_config(
+    config_path: Option<impl Into<String>>,
+) -> Result<PartialConfig, RumblerError> {
     let rumbler_config = RumblerConfigEnvironment::init_from_env()
         .map_err(|e| RumblerError::ConfigParse(format!("env var error: {e}")))?;
     let rambler_config = RamblerConfigEnvironment::init_from_env()
@@ -133,7 +135,9 @@ pub fn try_load_config(config_path: Option<&str>) -> Result<PartialConfig, Rumbl
     })
 }
 
-fn resolve_file_config(config_path: Option<&str>) -> Result<PartialConfig, RumblerError> {
+fn resolve_file_config(
+    config_path: Option<impl Into<String>>,
+) -> Result<PartialConfig, RumblerError> {
     let config_path = resolve_config_path(config_path)?;
     let file: PartialConfig = match config_path {
         ConfigPath::Toml(path) => {
@@ -151,9 +155,10 @@ fn resolve_file_config(config_path: Option<&str>) -> Result<PartialConfig, Rumbl
     Ok(file)
 }
 
-fn resolve_config_path(config_path: Option<&str>) -> Result<ConfigPath, RumblerError> {
+fn resolve_config_path(config_path: Option<impl Into<String>>) -> Result<ConfigPath, RumblerError> {
     if let Some(config_path) = config_path {
-        let path = Path::new(config_path);
+        let config_path = config_path.into();
+        let path = Path::new(config_path.as_str());
         return if path.exists() {
             if path.extension().is_some_and(|ext| ext == "json") {
                 Ok(ConfigPath::Json(path.to_path_buf()))
