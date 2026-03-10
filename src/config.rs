@@ -73,34 +73,34 @@ fn merge_environment(
             .get(environment.as_str())
             .ok_or_else(|| RumblerError::UnknownEnvironment(environment))?;
 
-        if let Some(_) = env.database {
+        if env.database.is_some() {
             config.database = env.database.clone();
         }
-        if let Some(_) = env.host {
+        if env.host.is_some() {
             config.host = env.host.clone();
         }
-        if let Some(_) = env.port {
+        if env.port.is_some() {
             config.port = env.port;
         }
-        if let Some(_) = env.user {
+        if env.user.is_some() {
             config.user = env.user.clone();
         }
-        if let Some(_) = env.password {
+        if env.password.is_some() {
             config.password = env.password.clone();
         }
-        if let Some(_) = env.role {
+        if env.role.is_some() {
             config.role = env.role.clone();
         }
-        if let Some(_) = env.schema {
+        if env.schema.is_some() {
             config.schema = env.schema.clone();
         }
-        if let Some(_) = env.sslmode {
+        if env.sslmode.is_some() {
             config.sslmode = env.sslmode.clone();
         }
-        if let Some(_) = env.directory {
+        if env.directory.is_some() {
             config.directory = env.directory.clone();
         }
-        if let Some(_) = env.table {
+        if env.table.is_some() {
             config.table = env.table.clone();
         }
     }
