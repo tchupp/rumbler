@@ -27,6 +27,8 @@ jobs:
     needs: update_release_draft
     name: release ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -49,3 +51,4 @@ jobs:
           target: ${{ matrix.target }}
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: refs/tags/${{ needs.update_release_draft.outputs.tag_name }}
+          features: ${{ matrix.features || '' }}
